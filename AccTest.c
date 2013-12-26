@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/time.h>
 #include <math.h>
@@ -47,12 +48,27 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 GForceStruct   Data;
 
+int ExitFlag=0;
+
+void sig_handler(int signo)
+{
+  if (signo == SIGINT)
+    printf("received SIGINT\n");
+   ExitFlag=1;
+}
+
+
 int main(void)
 {
    int i2c_handle;
 
    const BUS = 1;
    int I2C_Current_Slave_Adress=0x68;
+
+
+    signal(SIGINT, sig_handler);
+
+
 
     i2c_handle = I2CWrapperOpen(BUS,I2C_Current_Slave_Adress);
 	if(i2c_handle <0) return -1;
@@ -66,19 +82,24 @@ int main(void)
       {
            
            Setup_MPU6050(i2c_handle);
-           usleep(10000); // wait a little
+           while(!ExitFlag)
+           {
+           usleep(100000); // wait a little
+
            Get_Accel_Values(i2c_handle,&Data);
            printf("Gx=%3.1f Gy=%3.1f Gz=%3.1f  Temp=%3.1f\n",\
            //acceleration are in 20G scale
-           (float) Data.Gx * 20.0 / 32767,
-           (float) Data.Gy * 20.0 / 32767,
-           (float) Data.Gz * 20.0 / 32767,
+           (float) Data.Gx * 16.0 / 32767,
+           (float) Data.Gy * 16.0 / 32767,
+           (float) Data.Gz * 16.0 / 32767,
            // temperature are 
            //Temperature in degrees C = (TEMP_OUT Register Value as a signed quantity)/340 + 36.53
 
            (float)  Data.Temperature / 340.0 + 36.53);
+          }
       }
 
    close(i2c_handle);
+   printf("Program close\n");
 return 0;
 }
