@@ -52,7 +52,7 @@ int main(void)
    int i2c_handle;
 
    const BUS = 1;
-   int I2C_Current_Slave_Adress=0x69;
+   int I2C_Current_Slave_Adress=0x68;
 
     i2c_handle = I2CWrapperOpen(BUS,I2C_Current_Slave_Adress);
 	if(i2c_handle <0) return -1;

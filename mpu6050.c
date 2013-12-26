@@ -11,7 +11,7 @@ int MPU6050_Test_I2C(int handle)
  
     if(Data == 0x68)
     {
-      printf("I2C Read Test Passed, MPU6050 Address: 0x69\r\n");       
+      printf("I2C Read Test Passed\r\n");       
       return(1);   
    }
      
