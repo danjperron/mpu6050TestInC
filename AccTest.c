@@ -145,7 +145,7 @@ int main(void)
            GyroxOffset = Xsum / CountSum;
            GyroyOffset = Ysum / CountSum;
            GyrozOffset = Zsum / CountSum;
-     
+
            while(!ExitFlag)
            {
            usleep(100000); // wait a little
@@ -155,14 +155,14 @@ int main(void)
            GSumSquare += ((float) Data.Gy) * Data.Gy;
            GSumSquare += ((float) Data.Gz) * Data.Gz;
            Gtotal = sqrt(GSumSquare);
-          
-           printf("Accelerometer x=%+2.2f y=%+2.2f z=%+2.2f All=%2.2f Temp=%+3.1f Gyro x=%+3.2f y=%+3.2f z=%+3.2f\n",\
+
+           printf("Accelerometer x=%+6.2f y=%+6.2f z=%+6.2f All=%5.2f Temp=%+4.1f Gyro x=%+7.2f y=%+7.2f z=%+7.2f\n",\
            //acceleration are in 20G scale
            AccFactor *  Data.Gx,
            AccFactor *  Data.Gy,
            AccFactor *  Data.Gz,
-           AccFactor *  Gtotal, 
-           // temperature are 
+           AccFactor *  Gtotal,
+           // temperature are
            //Temperature in degrees C = (TEMP_OUT Register Value as a signed quantity)/340 + 36.53
 
            (float)  Data.Temperature / 340.0 + 36.53,
