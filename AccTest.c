@@ -169,6 +169,7 @@ int main(void)
            GyroFactor * (Data.Gyrox - GyroxOffset),
            GyroFactor * (Data.Gyroy - GyroyOffset),
            GyroFactor * (Data.Gyroz - GyrozOffset));
+           fflush(stdout);
           }
       }
 
