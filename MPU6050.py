@@ -295,8 +295,8 @@ class MPU6050:
       #and the 3 last ar'e the gyro data
 
       AccData.Gyrox = ShortData[4] * self.GyroFactor
-      AccData.Gyrox = ShortData[4] * self.GyroFactor
-      AccData.Gyrox = ShortData[4] * self.GyroFactor
+      AccData.Gyroy = ShortData[5] * self.GyroFactor
+      AccData.Gyroz = ShortData[6] * self.GyroFactor
 
       return AccData
 
