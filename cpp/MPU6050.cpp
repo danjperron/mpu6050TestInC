@@ -317,7 +317,7 @@ int main(void)
                }
 
         cout << "Peak at [" << MaxIdx << "] : " << MaxIdx * (1000.0/1024.0) << "Hz" ;
-        cout << "Amplitude =" <<  OutTable[MaxIdx] << endl;
+        cout << " Amplitude =" <<  OutTable[MaxIdx] << endl;
 
 
 
