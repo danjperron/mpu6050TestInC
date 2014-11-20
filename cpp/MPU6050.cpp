@@ -7,7 +7,7 @@ extern "C" {
 }
 #include "MPU6050.h"
 
-
+#include <time.h>
 using namespace std;
 
 #ifdef USE_TEMPERATURE
@@ -21,6 +21,12 @@ MPU6050::MPU6050()
     this->Channel=1;
     this->Address= 0x68;
     setup();
+}
+
+unsigned long  Microseconds(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec*1000000 + ts.tv_nsec/1000;
 }
 
 
@@ -107,6 +113,7 @@ GForceStruct *  MPU6050::readData(GForceStruct * gdata, int Count)
 
 void MPU6050::setSampleRate(int value)
 {
+   SampleRate = value;
    unsigned char  SampleReg = (8000/ value) -1;
    i2c.WriteByte(MPU6050_RA_SMPLRT_DIV,SampleReg);
 
@@ -193,20 +200,17 @@ int main(void)
   bool ExitFlag= false;
   int MaxCount =   (32 /  sizeof(GForceStruct));
 
-//  GForceStruct FTable[1024];
-//  float InTable[1024];
-//  float OutTable[1024];
-//  int mbox_h =   OpenMyGpuFFT(10); // prepare gpu fft with 1024 data points
 
 
+// select number of data  point for FFT   it is 2 power N
+// FFT_NPOINT_LOG 8 is 256 data points
+// FFT_NPOINT_LOG 10 is 1024 data points
+#define  FFT_NPOINT_LOG  8
 
-// use 256 points instead of 1024.   1/(1000ms * 256)= 3.9  times per seconds
-
-  GForceStruct FTable[256];
-  float InTable[256];
-  float OutTable[256];
-
-  int mbox_h =   OpenMyGpuFFT(8); // prepare gpu fft with 256  points
+  GForceStruct FTable[1 << FFT_NPOINT_LOG];
+  float InTable[1 << FFT_NPOINT_LOG];
+  float OutTable[1 << FFT_NPOINT_LOG];
+  int mbox_h =   OpenMyGpuFFT(FFT_NPOINT_LOG); // prepare gpu fft with (2 power FFT_NPOINT_LOG) data points
 
   /*
     // testing FFT routine
@@ -245,7 +249,7 @@ int main(void)
    mpu->enableFifo(true);
 
 
-   cout << "Ready" << endl;
+   cout << "GPU FFT with " << NumberOfDataPoint << " data points ready!" << endl;
 
    for(loop1=0;;loop1++)
 {
@@ -303,9 +307,11 @@ int main(void)
 //           cout << Gx << "\t" << Gy << "\t" << Gz << "\t" << GT << endl;
            }
 
-
+         unsigned long start,middle,end;
+         start= Microseconds();
+         middle = Microseconds();
          DoMyGpuFFT(InTable,OutTable,1);
-
+         end=Microseconds();
           int idx;
           int MaxIdx;
           float MaxPeak=0;
@@ -316,8 +322,11 @@ int main(void)
                 MaxIdx=idx;
                }
 
-        cout << "Peak at [" << MaxIdx << "] : " << MaxIdx * (1000.0/1024.0) << "Hz" ;
-        cout << " Amplitude =" <<  OutTable[MaxIdx] << endl;
+        float FundamentalFrequency =  (float) mpu->SampleRate / (float) NumberOfDataPoint;
+
+        cout << "Peak at [" << MaxIdx << "] : " << MaxIdx * FundamentalFrequency << "Hz" ;
+        cout << " Amplitude =" <<  OutTable[MaxIdx];
+       cout << " FFT exec times=" << (end - middle) -(middle - start) << " us" << endl;
 
 
 

@@ -28,6 +28,7 @@ public:
        int FailedFlag;
 
        float Gx,Gy,Gz;
+       int SampleRate;
 #ifdef  USE_TEMPERATURE
        float Temperature;
 static const  float TemperatureGain;

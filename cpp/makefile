@@ -21,13 +21,11 @@ C = /opt/vc/src/hello_pi/hello_fft/mailbox.c \
 CO = mailbox.o gpu_fft.o gpu_fft_base.o gpu_fft_twiddles.o gpu_fft_shaders.o myGpuFFT_lib.o
 
 
-C1D = $(C) hello_fft.c
-C2D = $(C) hello_fft_2d.c gpu_fft_trans.c
-
-H1D = gpu_fft.h
-H2D = gpu_fft.h gpu_fft_trans.h hello_fft_2d_bitmap.h
-
 F = -lrt -lm -I /opt/vc/src/hello_pi/hello_fft/
+
+
+all:		MPU6050 
+
 
 
 myGpuFFT_lib.o:	myGpuFFT_lib.c
@@ -56,7 +54,6 @@ myGpuFFT_lib.a:  $(S) $(CO)
 MPU6050:	myGpuFFT_lib.a I2CWrapper.o MPU6050.cpp I2CWrapper.cpp
 	g++ -lrt -o MPU6050 MPU6050.cpp I2CWrapper.cpp myGpuFFT_lib.a
 
-all:		MPU6050 
 
 clean:
 	rm -f *.bin
