@@ -1,4 +1,5 @@
 #include  <iostream>
+#include <iomanip>
 #include  <cmath>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
@@ -323,10 +324,14 @@ int main(void)
                }
 
         float FundamentalFrequency =  (float) mpu->SampleRate / (float) NumberOfDataPoint;
-
-        cout << "Peak at [" << MaxIdx << "] : " << MaxIdx * FundamentalFrequency << "Hz" ;
+        cout.precision(03);
+        cout << "Peak at [" << std::setw(3) <<  MaxIdx << "] : ";
+        cout.precision(1);
+        cout << std::setw(5) << std::fixed   << MaxIdx * FundamentalFrequency << "Hz" ;
+        cout.precision(3);
         cout << " Amplitude =" <<  OutTable[MaxIdx];
-       cout << " FFT exec times=" << (end - middle) -(middle - start) << " us" << endl;
+        cout << "G Average Force = " << OutTable[0];
+        cout << "G FFT exec times=" << (end - middle) -(middle - start) << " us" << endl;
 
 
 
