@@ -206,39 +206,30 @@ int main(void)
 // select number of data  point for FFT   it is 2 power N
 // FFT_NPOINT_LOG 8 is 256 data points
 // FFT_NPOINT_LOG 10 is 1024 data points
-#define  FFT_NPOINT_LOG  8
+#define  FFT_NPOINT_LOG   8
+
+// define 4 FFT to be use GT,Gx,Gy and Gz
+#define  FFT_JOBS      4
+
 
   GForceStruct FTable[1 << FFT_NPOINT_LOG];
-  float InTable[1 << FFT_NPOINT_LOG];
-  float OutTable[1 << FFT_NPOINT_LOG];
-  int mbox_h =   OpenMyGpuFFT(FFT_NPOINT_LOG); // prepare gpu fft with (2 power FFT_NPOINT_LOG) data points
 
-  /*
-    // testing FFT routine
-    // offset of 1 should be in OutTable[0];
-    // Amplitude  of 1 should be in OutTable[5]
+  float GtIn[1 << FFT_NPOINT_LOG];
+  float GxIn[1 << FFT_NPOINT_LOG];
+  float GyIn[1 << FFT_NPOINT_LOG];
+  float GzIn[1 << FFT_NPOINT_LOG];
 
-   float mpi = 2.0 * 3.141592654 / 1024.0;
-   for(i=0;i<NumberOfDataPoint;i++)
-    InTable[i]= 1.0 + sin(mpi * 5 * i);
+  float * InTable[FFT_JOBS] = {GtIn,GxIn,GyIn,GzIn};
 
-   DoMyGpuFFT(InTable,OutTable,1);
+  float GtOut[1 << FFT_NPOINT_LOG];
+  float GxOut[1 << FFT_NPOINT_LOG];
+  float GyOut[1 << FFT_NPOINT_LOG];
+  float GzOut[1 << FFT_NPOINT_LOG];
 
-   for(i=0;i<10;i++)
-    cout << i << " : " << OutTable[i] << endl;
-
-   CloseMyGpuFFT();
-
-   return 0;
+  float * OutTable[FFT_JOBS] = {GtOut,GxOut,GyOut,GzOut};
 
 
- */
-
-
-
-
-
-
+  int mbox_h =   OpenMyGpuFFT(FFT_NPOINT_LOG,FFT_JOBS); // prepare gpu fft with (2 power FFT_NPOINT_LOG) data points
 
 
    MPU6050 * mpu = new MPU6050();
@@ -252,13 +243,11 @@ int main(void)
 
    cout << "GPU FFT with " << NumberOfDataPoint << " data points ready!" << endl;
 
-   for(loop1=0;;loop1++)
-{
+   for(loop1=0;loop1<10;loop1++)
+   {
        Count=0;
         while(Count<NumberOfDataPoint)
          {
-
-
 
            Status = mpu->readStatus();
 
@@ -294,47 +283,94 @@ int main(void)
               }
          }
 
+
+
+         float *  GtPt= GtIn;
+         float *  GxPt= GxIn;
+         float *  GyPt= GyIn;
+         float *  GzPt= GzIn;
+         GForceStruct * TablePt= FTable;
+
+
+
          for(i=0;i<NumberOfDataPoint;i++)
            {
-              float Gx,Gy,Gz,GT;
-
-              Gx = mpu->AccelerationFactor * (mpu->SWAPBYTE(FTable[i].Gx));
-              Gy = mpu->AccelerationFactor * (mpu->SWAPBYTE(FTable[i].Gy));
-              Gz = mpu->AccelerationFactor * (mpu->SWAPBYTE(FTable[i].Gz));
-
-
-              GT=  sqrt(Gx * Gx + Gy * Gy + Gz * Gz);
-              InTable[i]=  GT;
-//           cout << Gx << "\t" << Gy << "\t" << Gz << "\t" << GT << endl;
+              float Gx,Gy,Gz;
+              *(GxPt++)=Gx = mpu->AccelerationFactor * (mpu->SWAPBYTE(TablePt->Gx));
+              *(GyPt++)=Gy = mpu->AccelerationFactor * (mpu->SWAPBYTE(TablePt->Gy));
+              *(GzPt++)=Gz = mpu->AccelerationFactor * (mpu->SWAPBYTE(TablePt->Gz));
+              *(GtPt++)= sqrt(Gx * Gx + Gy * Gy + Gz * Gz);
+              TablePt++;
            }
 
          unsigned long start,middle,end;
          start= Microseconds();
          middle = Microseconds();
-         DoMyGpuFFT(InTable,OutTable,1);
+
+         // this is the FFT 
+         DoMyGpuFFT(InTable,OutTable,0);
+
          end=Microseconds();
-          int idx;
-          int MaxIdx;
-          float MaxPeak=0;
-          for(idx=1;idx<= (NumberOfDataPoint/2); idx ++)
-             if(OutTable[idx] > MaxPeak)
+
+         int idx;
+         int MaxIdx;
+         float MaxPeak=0;
+
+         GtPt= &GtOut[1];
+         GxPt= &GxOut[1];
+         GyPt= &GyOut[1];
+         GzPt= &GzOut[1];
+
+
+         for(idx=1;idx<= (NumberOfDataPoint/2); idx ++)
+          {
+
+           // we need to chack all axis in case we have a circular vibration
+           // circular vibration won't be notice on absolute vector
+             if(*GtPt > MaxPeak)
                {
-                 MaxPeak= OutTable[idx];
-                MaxIdx=idx;
+                 MaxPeak= *GtPt;
+                 MaxIdx=idx;
                }
+             if(*GxPt > MaxPeak)
+               {
+                 MaxPeak= *GxPt;
+                 MaxIdx=idx;
+               }
+             if(*GyPt > MaxPeak)
+               {
+                 MaxPeak= *GyPt;
+                 MaxIdx=idx;
+               }
+             if(*GzPt > MaxPeak)
+               {
+                 MaxPeak= *GzPt;
+                 MaxIdx=idx;
+               }
+
+             GtPt++;
+             GxPt++;
+             GyPt++;
+             GzPt++;
+
+          }
 
         float FundamentalFrequency =  (float) mpu->SampleRate / (float) NumberOfDataPoint;
         cout.precision(03);
         cout << "Peak at [" << std::setw(3) <<  MaxIdx << "] : ";
         cout.precision(1);
         cout << std::setw(5) << std::fixed   << MaxIdx * FundamentalFrequency << "Hz" ;
-        cout.precision(3);
-        cout << " Amplitude =" <<  OutTable[MaxIdx];
-        cout << "G Average Force = " << OutTable[0];
+        cout.precision(4);
+        cout << " Amplitude  GT=" <<  sqrt(GtOut[MaxIdx])/(NumberOfDataPoint/2.0);
+        cout << " Gx= " << sqrt(GxOut[MaxIdx])/(NumberOfDataPoint/2.0);
+        cout << " Gy= " << sqrt(GyOut[MaxIdx])/(NumberOfDataPoint/2.0);
+        cout << " Gz= " << sqrt(GzOut[MaxIdx])/(NumberOfDataPoint/2.0);
+        cout << "G Average Force = " << sqrt(GtOut[0])/NumberOfDataPoint;
+//        cout << " Gx=" << sqrt(GxOut[0])/NumberOfDataPoint;
+//        cout << " Gy=" << sqrt(GyOut[0])/NumberOfDataPoint;
+//        cout << " Gz=" << sqrt(GzOut[0])/NumberOfDataPoint;
+
         cout << "G FFT exec times=" << (end - middle) -(middle - start) << " us" << endl;
-
-
-
 
         if(ExitFlag) break;
       }

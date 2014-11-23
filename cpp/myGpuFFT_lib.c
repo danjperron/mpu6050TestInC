@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mailbox.h"
 #include "gpu_fft.h"
 
+int jobs;
 int mbox_handle;
 int   NumberOfDataPoint;
 int   NumberOfDataPointLog2;
@@ -42,8 +43,9 @@ struct GPU_FFT_COMPLEX * base;
 struct GPU_FFT *fft;
 
 
-int OpenMyGpuFFT(int SetNumberOfDataPointLog2)
+int OpenMyGpuFFT(int SetNumberOfDataPointLog2,int njob)
 {
+  jobs = njob;
   mbox_handle= mbox_open();
   if(mbox_handle>=0)
    {
@@ -52,7 +54,7 @@ int OpenMyGpuFFT(int SetNumberOfDataPointLog2)
   fNumberOfDataPoint = (float) NumberOfDataPoint;
   fHalfDataPoint = fNumberOfDataPoint / 2.0;
 
-  int ret= gpu_fft_prepare(mbox_handle,NumberOfDataPointLog2, GPU_FFT_FWD,1,&fft);
+  int ret= gpu_fft_prepare(mbox_handle,NumberOfDataPointLog2, GPU_FFT_FWD,jobs,&fft);
   }
   return mbox_handle;
 }
@@ -66,6 +68,52 @@ void CloseMyGpuFFT(void)
 
 
 
+void DoMyGpuFFT(float ** input, float ** output, int  DoTheSquareRoot)
+{
+ int i,j;
+ float ftemp;
+ float * floatPt; 
+
+ for(j=0;j<jobs;j++)
+ {
+  base = fft->in + j * fft->step;
+  floatPt = input[j];
+
+  for(i=0;i<NumberOfDataPoint;i++)
+  {
+   base->re=*(floatPt++); 
+   base->im =0.0;
+   base++;
+  }
+ }
+
+ gpu_fft_execute(fft);
+
+  for(j=0;j<jobs;j++)
+   {
+    base = fft->out + j * fft->step;
+    floatPt = output[j];
+
+     //average value
+     ftemp= (base->re * base->re) + (base->im * base->im);
+     base++;
+     if(DoTheSquareRoot)
+     ftemp= sqrt(ftemp) / fNumberOfDataPoint;
+     *(floatPt++)= ftemp;
+
+     // Get square/Convert frequency domain
+     for(i=1;i<NumberOfDataPoint;i++)
+     {
+       ftemp= (base->re * base->re) + (base->im * base->im);
+       base++;
+       if(DoTheSquareRoot)
+         ftemp= sqrt(ftemp) / fHalfDataPoint;
+       *(floatPt++)= ftemp;
+     }
+   }
+}
+
+/*
 void DoMyGpuFFT(float * input, float * output, int  DoTheSquareRoot)
 {
  int i;
@@ -97,3 +145,4 @@ void DoMyGpuFFT(float * input, float * output, int  DoTheSquareRoot)
    }
 }
 
+*/
