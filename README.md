@@ -21,7 +21,6 @@ GPU FFT version calculating all axis and the absolute vector in parallel.
 - myGpuFFT_lib.c My own static library to encapsulate the GPU FFT.
 - myGpuFFT_lib.h header declaration.
  
-To compile just do
-cd cpp
+To compile just do in folder cpp,
 make clean; make all
 
