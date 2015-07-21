@@ -21,7 +21,9 @@ C = /opt/vc/src/hello_pi/hello_fft/mailbox.c \
 CO = mailbox.o gpu_fft.o gpu_fft_base.o gpu_fft_twiddles.o gpu_fft_shaders.o myGpuFFT_lib.o
 
 
-F = -lrt -lm -I /opt/vc/src/hello_pi/hello_fft/
+
+F = -lbcm_host -lrt -lm -I /opt/vc/src/hello_pi/hello_fft/ -L/opt/vc/lib/ -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
+
 
 
 all:		MPU6050 
