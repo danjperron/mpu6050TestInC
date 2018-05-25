@@ -22,7 +22,7 @@ CO = mailbox.o gpu_fft.o gpu_fft_base.o gpu_fft_twiddles.o gpu_fft_shaders.o myG
 
 
 
-F = -lbcm_host -lrt -lm -I /opt/vc/src/hello_pi/hello_fft/ -L/opt/vc/lib/ -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
+F = -lbcm_host  -lrt -lm -I /opt/vc/src/hello_pi/hello_fft/ -L/opt/vc/lib/ -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 
 
 
@@ -54,7 +54,7 @@ myGpuFFT_lib.a:  $(S) $(CO)
 
 
 MPU6050:	myGpuFFT_lib.a I2CWrapper.o MPU6050.cpp I2CWrapper.cpp
-	g++ -lrt -o MPU6050 MPU6050.cpp I2CWrapper.cpp myGpuFFT_lib.a
+	g++ -lrt -o MPU6050 MPU6050.cpp I2CWrapper.cpp myGpuFFT_lib.a -ldl
 
 
 clean:

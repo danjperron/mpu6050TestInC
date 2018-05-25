@@ -1,8 +1,10 @@
+
 #include  <iostream>
 #include <iomanip>
 #include  <cmath>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 extern "C" {
 #include "myGpuFFT_lib.h"
 }
