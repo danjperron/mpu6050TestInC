@@ -49,7 +49,7 @@ while True:
   if PeakForce > Threshold :
     if not(ShakeFlag) :
         ShakeFlag = True
-        print "Vibration detected ", PeakForce, "G"
+        print("Vibration detected ", PeakForce, "G")
   else:
     ShakeFlag= False
      
